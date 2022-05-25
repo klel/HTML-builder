@@ -7,10 +7,6 @@ const dest = __dirname + '/project-dist';
 
 const htmlDest = dest + '/index.html';
 
-const header = __dirname + '/components/header.html';
-const footer = __dirname + '/components/footer.html';
-const articles = __dirname + '/components/articles.html';
-
 fs.mkdir(dest, { recursive: true }, (err) => {
   if (err) {
     throw err;
@@ -18,28 +14,39 @@ fs.mkdir(dest, { recursive: true }, (err) => {
 });
 
 (async function createIndexHtml() {
-  let h = null,
-    a = null,
-    f = null;
+  let components = await fsp.readdir(__dirname + '/components/', {
+    withFileTypes: true,
+  });
 
-  h = await fsp.readFile(header, 'utf8');
-  a = await fsp.readFile(articles, 'utf8');
-  f = await fsp.readFile(footer, 'utf8');
+  let filenames = components.map((f) => {
+    const extension = path.extname(__dirname + '/components/' + f.name);
+    if (extension !== '.html') {
+      return;
+    }
+    return f.name;
+  });
 
-  fs.readFile(sourceTmpl, 'utf8', (err, data) => {
+  let data = await fsp.readFile(sourceTmpl, 'utf8');
+  let resultPage = null;
+
+  for (let file of filenames) {
+    let tag = file.split('.')[0];
+
+    let text = await fsp.readFile(__dirname + '/components/' + file, 'utf8');
+
+    if (!resultPage) {
+      resultPage = data.replace(new RegExp('{{' + tag + '}}', 'gm'), text);
+    } else {
+      resultPage = resultPage.replace(
+        new RegExp('{{' + tag + '}}', 'gm'),
+        text
+      );
+    }
+  }
+  fs.writeFile(htmlDest, resultPage, (err) => {
     if (err) {
       throw err;
     }
-
-    let result = data.replace(/{{header}}/, h);
-    result = result.replace(/{{articles}}/, a);
-    result = result.replace(/{{footer}}/, f);
-
-    fs.writeFile(htmlDest, result, (err) => {
-      if (err) {
-        throw err;
-      }
-    });
   });
 })();
 
