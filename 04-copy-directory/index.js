@@ -9,10 +9,21 @@ fs.mkdir(dest, { recursive: true }, (err) => {
   }
 });
 
+fs.readdir(dest, (err, files) => {
+  if (err) throw err;
+
+  for (const file of files) {
+    fs.unlink(dest + '/' + file, err => {
+      if (err) throw err;
+    });
+  }
+});
+
 fs.readdir(source, (err, files) => {
   if (err) {
     throw err;
   }
+
 
   files.forEach((f) => {
     fs.copyFile(source + '/' + f, dest + '/' + f, (err) => {
