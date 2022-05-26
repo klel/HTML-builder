@@ -7,11 +7,30 @@ const dest = __dirname + '/project-dist';
 
 const htmlDest = dest + '/index.html';
 
-fs.mkdir(dest, { recursive: true }, (err) => {
-  if (err) {
-    throw err;
-  }
-});
+(function recreateDestinationFolder() {
+  const clearDirectory = (direct) => {
+    fs.readdir(direct, { withFileTypes: true }, (err, files) => {
+      if (err) throw err;
+      else
+        files.forEach((file) => {
+          if (file.isFile()) {
+            fs.unlink(path.join(direct, file.name), (err) => {
+              if (err) throw err;
+            });
+          }
+          if (file.isDirectory()) {
+            clearDirectory(path.join(direct, file.name));
+          }
+        });
+    });
+  };
+
+  fs.mkdir(dest, (err) => {
+    if (err.code == 'EEXIST') {
+      clearDirectory(dest);
+    }
+  });
+})();
 
 (async function createIndexHtml() {
   let components = await fsp.readdir(__dirname + '/components/', {
