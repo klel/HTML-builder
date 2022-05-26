@@ -26,6 +26,10 @@ const htmlDest = dest + '/index.html';
   };
 
   fs.mkdir(dest, (err) => {
+    if(!err){
+      return;
+    }
+
     if (err.code == 'EEXIST') {
       clearDirectory(dest);
     }
